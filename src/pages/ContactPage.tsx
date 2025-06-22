@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScheduleSection } from "/Users/richabhowmik/Downloads/project/src/pages/ScheduleSection.tsx";
+import { ScheduleSection } from "@/pages/ScheduleSection.tsx";
 
 import { 
   Mail, 
