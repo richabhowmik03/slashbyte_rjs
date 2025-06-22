@@ -4,7 +4,7 @@ import * as React from "react";
 import { Calendar as CalendarIcon, Clock, CheckCircle, User, Mail, Phone } from "lucide-react";
 
 // Simple CalendarDemo component using shadcn/ui Calendar
-import { Calendar } from "/Users/richabhowmik/Downloads/project/src/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 
 interface BookingData {
   name: string;
