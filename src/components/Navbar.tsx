@@ -33,12 +33,9 @@ const Navbar = () => {
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="w-10 h-10 rounded-lg overflow-hidden group-hover:scale-105 transition-transform duration-200">
               <img 
-                src="/image copy.png" 
+                src="/image.png" 
                 alt="SlashByte Logo" 
-                className="w-full h-full object-cover filter brightness-0 invert"
-                style={{
-                  filter: 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)'
-                }}
+                className="w-full h-full object-cover"
               />
             </div>
             <span className="text-xl font-bold text-gray-900">SlashByte</span>
