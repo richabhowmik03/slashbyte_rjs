@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Zap, 
   Mail, 
   Phone, 
   MapPin,
@@ -21,8 +20,12 @@ const Footer = () => {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center space-x-2 mb-6">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <Zap className="h-6 w-6 text-white" />
+              <div className="w-10 h-10 rounded-lg overflow-hidden">
+                <img 
+                  src="/image.png" 
+                  alt="SlashByte Logo" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="text-xl font-bold">SlashByte</span>
             </Link>
