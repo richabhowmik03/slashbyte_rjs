@@ -22,9 +22,12 @@ const Footer = () => {
             <Link to="/" className="flex items-center space-x-2 mb-6">
               <div className="w-10 h-10 rounded-lg overflow-hidden">
                 <img 
-                  src="/image.png" 
+                  src="/image copy.png" 
                   alt="SlashByte Logo" 
                   className="w-full h-full object-cover"
+                  style={{
+                    filter: 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(0deg) brightness(100%) contrast(100%)'
+                  }}
                 />
               </div>
               <span className="text-xl font-bold">SlashByte</span>
