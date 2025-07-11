@@ -43,7 +43,7 @@ def test_azure_connection():
             azure_endpoint=os.getenv("endpoint"),
             api_key=os.getenv("subscription_key"),
             api_version=os.getenv("api_version"),
-            temperature=0.7,
+            temperature=1,
         )
         
         # Test with a simple question
