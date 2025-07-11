@@ -8,6 +8,12 @@ const DemoPage = () => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isAsking, setIsAsking] = useState(false);
+  const [ragReady, setRagReady] = useState(false);
+
+  // Backend API URL - adjust if your backend runs on a different port
+  const API_BASE_URL = 'http://localhost:8000';
 
   const demos = [
     {
@@ -63,10 +69,68 @@ const DemoPage = () => {
     }, 1000);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setUploadedFile(file.name);
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_BASE_URL}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setUploadedFile(file.name);
+          setRagReady(true);
+          console.log('Upload successful:', result);
+        } else {
+          const error = await response.json();
+          alert(`Upload failed: ${error.detail}`);
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Upload failed. Make sure the backend is running on http://localhost:8000');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleRagQuestion = async (question: string) => {
+    if (!ragReady) {
+      alert('Please upload a document first');
+      return;
+    }
+
+    setIsAsking(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/ask`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          return result.answer;
+        } else {
+          throw new Error(result.error || 'Unknown error');
+        }
+      } else {
+        throw new Error('Failed to get response from server');
+      }
+    } catch (error) {
+      console.error('Question error:', error);
+      return `Error: ${error.message}. Make sure the backend is running.`;
+    } finally {
+      setIsAsking(false);
     }
   };
 
@@ -185,52 +249,72 @@ const DemoPage = () => {
               <div className="bg-gray-50 rounded-xl p-6">
                 {!uploadedFile ? (
                   <div className="text-center py-12">
-                    <Upload className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <Upload className={`h-16 w-16 mx-auto mb-4 ${isUploading ? 'text-blue-500 animate-spin' : 'text-gray-400'}`} />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload a Document</h3>
                     <p className="text-gray-600 mb-6">Supported formats: PDF, DOCX, TXT (Max 10MB for demo)</p>
-                    <label className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer inline-block">
-                      Choose File
+                    <label className={`px-6 py-3 rounded-lg transition-colors cursor-pointer inline-block ${
+                      isUploading 
+                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}>
+                      {isUploading ? 'Uploading...' : 'Choose File'}
                       <input
                         type="file"
                         accept=".pdf,.docx,.txt"
                         onChange={handleFileUpload}
                         className="hidden"
+                        disabled={isUploading}
                       />
                     </label>
                   </div>
                 ) : (
                   <div>
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className={`border rounded-lg p-4 mb-6 ${
+                      ragReady 
+                        ? 'bg-green-50 border-green-200' 
+                        : 'bg-yellow-50 border-yellow-200'
+                    }`}>
                       <div className="flex items-center">
-                        <FileText className="h-5 w-5 text-green-600 mr-2" />
-                        <span className="text-green-800">Document uploaded: {uploadedFile}</span>
+                        <FileText className={`h-5 w-5 mr-2 ${
+                          ragReady ? 'text-green-600' : 'text-yellow-600'
+                        }`} />
+                        <span className={ragReady ? 'text-green-800' : 'text-yellow-800'}>
+                          Document uploaded: {uploadedFile} {ragReady ? '(Ready for questions)' : '(Processing...)'}
+                        </span>
                       </div>
                     </div>
                     
                     <div className="bg-white rounded-lg p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Ask questions about your document:</h3>
                       <div className="space-y-3 mb-4">
-                        <button className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700">
+                        <button 
+                          onClick={() => handleRagQuestion("What is the main topic of this document?")}
+                          disabled={!ragReady || isAsking}
+                          className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                           What is the main topic of this document?
                         </button>
-                        <button className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700">
+                        <button 
+                          onClick={() => handleRagQuestion("Summarize the key points")}
+                          disabled={!ragReady || isAsking}
+                          className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                           Summarize the key points
                         </button>
-                        <button className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700">
+                        <button 
+                          onClick={() => handleRagQuestion("Are there any action items mentioned?")}
+                          disabled={!ragReady || isAsking}
+                          className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                           Are there any action items mentioned?
                         </button>
                       </div>
                       
-                      <div className="flex space-x-2">
-                        <input
-                          type="text"
-                          placeholder="Ask a question about your document..."
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                          Ask
-                        </button>
-                      </div>
+                      <RagQuestionInput 
+                        onAsk={handleRagQuestion}
+                        disabled={!ragReady}
+                        isAsking={isAsking}
+                      />
                     </div>
                   </div>
                 )}
@@ -282,6 +366,20 @@ const DemoPage = () => {
         </div>
       </section>
 
+      {/* RAG Results Display */}
+      {activeDemo === 'rag' && uploadedFile && (
+        <section className="py-12 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div id="rag-results" className="bg-gray-50 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Q&A Results</h3>
+              <div id="rag-conversation" className="space-y-4">
+                {/* Results will be dynamically added here */}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Schedule Demo CTA */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -300,6 +398,69 @@ const DemoPage = () => {
         </div>
       </section>
     </div>
+  );
+};
+
+// Component for RAG question input
+const RagQuestionInput = ({ onAsk, disabled, isAsking }: {
+  onAsk: (question: string) => Promise<string>;
+  disabled: boolean;
+  isAsking: boolean;
+}) => {
+  const [question, setQuestion] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!question.trim() || disabled || isAsking) return;
+
+    const answer = await onAsk(question);
+    
+    // Display the result
+    const resultsContainer = document.getElementById('rag-conversation');
+    if (resultsContainer) {
+      const questionDiv = document.createElement('div');
+      questionDiv.className = 'bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500';
+      questionDiv.innerHTML = `<strong>Q:</strong> ${question}`;
+      
+      const answerDiv = document.createElement('div');
+      answerDiv.className = 'bg-white p-4 rounded-lg border-l-4 border-gray-300';
+      answerDiv.innerHTML = `<strong>A:</strong> ${answer}`;
+      
+      resultsContainer.appendChild(questionDiv);
+      resultsContainer.appendChild(answerDiv);
+      
+      // Scroll to results
+      resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    setQuestion('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex space-x-2">
+      <input
+        type="text"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        placeholder="Ask a question about your document..."
+        disabled={disabled || isAsking}
+        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+      />
+      <button 
+        type="submit"
+        disabled={disabled || isAsking || !question.trim()}
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+      >
+        {isAsking ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            Asking...
+          </>
+        ) : (
+          'Ask'
+        )}
+      </button>
+    </form>
   );
 };
 
