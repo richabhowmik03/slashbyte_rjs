@@ -6,6 +6,7 @@ import AboutPage from './pages/AboutPage';
 import ServicesPage from './pages/ServicesPage';
 import PortfolioPage from './pages/PortfolioPage';
 import DemoPage from './pages/DemoPage';
+import CareersPage from './pages/CareersPage';
 import ContactPage from './pages/ContactPage';
 import Footer from './components/Footer';
 
