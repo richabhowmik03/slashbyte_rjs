@@ -13,7 +13,7 @@ const DemoPage = () => {
   const [ragReady, setRagReady] = useState(false);
 
   // Backend API URL - adjust if your backend runs on a different port
-  const API_BASE_URL = 'http://localhost:8000';
+  const API_BASE_URL = 'https://slashbyte-rjs.vercel.app/';
 
   const demos = [
     {
