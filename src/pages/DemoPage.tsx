@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, FileText, MessageSquare, Mic, Upload, Send, Bot } from 'lucide-react';
+import { Play, FileText, MessageSquare, Mic, Upload, Send, Bot, X, RefreshCw } from 'lucide-react';
 
 const DemoPage = () => {
   const [activeDemo, setActiveDemo] = useState('chatbot');
@@ -142,6 +142,19 @@ const DemoPage = () => {
     }
   };
 
+  const handleClearDocument = () => {
+    // Reset all document-related state
+    setUploadedFile(null);
+    setRagReady(false);
+    setRagMessages([]);
+    setIsAsking(false);
+    
+    // Reset file input
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
   return (
     <div className="pt-16">
       {/* Hero Section */}
@@ -282,13 +295,36 @@ const DemoPage = () => {
                         ? 'bg-green-50 border-green-200' 
                         : 'bg-yellow-50 border-yellow-200'
                     }`}>
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
                         <FileText className={`h-5 w-5 mr-2 ${
                           ragReady ? 'text-green-600' : 'text-yellow-600'
                         }`} />
                         <span className={ragReady ? 'text-green-800' : 'text-yellow-800'}>
                           Document uploaded: {uploadedFile} {ragReady ? '(Ready for questions)' : '(Processing...)'}
                         </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={handleClearDocument}
+                            className="flex items-center px-3 py-1 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors duration-200"
+                            title="Clear document and start over"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Clear
+                          </button>
+                          <button
+                            onClick={() => {
+                              const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                              if (fileInput) fileInput.click();
+                            }}
+                            className="flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors duration-200"
+                            title="Upload a different document"
+                          >
+                            <RefreshCw className="h-4 w-4 mr-1" />
+                            Change
+                          </button>
+                        </div>
                       </div>
                     </div>
                     
@@ -297,6 +333,7 @@ const DemoPage = () => {
                       {/* Chat Header */}
                       <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4">
                         <div className="flex items-center">
+                          <div className="flex items-center">
                           <div className="bg-white bg-opacity-20 p-2 rounded-lg mr-3">
                             <FileText className="h-5 w-5 text-white" />
                           </div>
@@ -304,6 +341,14 @@ const DemoPage = () => {
                             <h3 className="text-white font-semibold">Document Q&A Assistant</h3>
                             <p className="text-purple-100 text-sm">Ask questions about: {uploadedFile}</p>
                           </div>
+                          </div>
+                          <button
+                            onClick={handleClearDocument}
+                            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-colors duration-200"
+                            title="Clear document and start over"
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </button>
                         </div>
                       </div>
 
@@ -402,6 +447,16 @@ const DemoPage = () => {
                   </div>
                 )}
               </div>
+              
+              {/* Hidden file input for "Change" button */}
+              <input
+                type="file"
+                accept=".pdf,.docx,.txt"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={isUploading}
+                id="change-file-input"
+              />
             </div>
           )}
 
