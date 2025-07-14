@@ -11,6 +11,7 @@ const DemoPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
   const [ragReady, setRagReady] = useState(false);
+  const [ragMessages, setRagMessages] = useState<Array<{type: 'user' | 'bot', content: string}>>([]);
 
   // Backend API URL - adjust if your backend runs on a different port
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://slashbyte-rjs.onrender.com';
@@ -106,7 +107,10 @@ const DemoPage = () => {
       return;
     }
 
+    // Add user question to messages
+    setRagMessages(prev => [...prev, { type: 'user', content: question }]);
     setIsAsking(true);
+    
     try {
       const response = await fetch(`${API_BASE_URL}/ask`, {
         method: 'POST',
@@ -119,6 +123,8 @@ const DemoPage = () => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
+          // Add bot response to messages
+          setRagMessages(prev => [...prev, { type: 'bot', content: result.answer }]);
           return result.answer;
         } else {
           throw new Error(result.error || 'Unknown error');
@@ -128,7 +134,9 @@ const DemoPage = () => {
       }
     } catch (error) {
       console.error('Question error:', error);
-      return `Error: ${error.message}. Make sure the backend is running.`;
+      const errorMessage = `Error: ${error.message}. Make sure the backend is running.`;
+      setRagMessages(prev => [...prev, { type: 'bot', content: errorMessage }]);
+      return errorMessage;
     } finally {
       setIsAsking(false);
     }
@@ -284,37 +292,112 @@ const DemoPage = () => {
                       </div>
                     </div>
                     
-                    <div className="bg-white rounded-lg p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Ask questions about your document:</h3>
-                      <div className="space-y-3 mb-4">
-                        <button 
-                          onClick={() => handleRagQuestion("What is the main topic of this document?")}
-                          disabled={!ragReady || isAsking}
-                          className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          What is the main topic of this document?
-                        </button>
-                        <button 
-                          onClick={() => handleRagQuestion("Summarize the key points")}
-                          disabled={!ragReady || isAsking}
-                          className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Summarize the key points
-                        </button>
-                        <button 
-                          onClick={() => handleRagQuestion("Are there any action items mentioned?")}
-                          disabled={!ragReady || isAsking}
-                          className="w-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Are there any action items mentioned?
-                        </button>
+                    {/* RAG Chat Interface */}
+                    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                      {/* Chat Header */}
+                      <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4">
+                        <div className="flex items-center">
+                          <div className="bg-white bg-opacity-20 p-2 rounded-lg mr-3">
+                            <FileText className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-white font-semibold">Document Q&A Assistant</h3>
+                            <p className="text-purple-100 text-sm">Ask questions about: {uploadedFile}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sample Questions */}
+                      {ragMessages.length === 0 && (
+                        <div className="p-4 bg-gray-50 border-b">
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">💡 Try these sample questions:</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <button 
+                              onClick={() => handleRagQuestion("What is the main topic of this document?")}
+                              disabled={!ragReady || isAsking}
+                              className="text-left p-3 bg-white hover:bg-blue-50 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed border border-blue-200 text-sm"
+                            >
+                              📄 What is the main topic?
+                            </button>
+                            <button 
+                              onClick={() => handleRagQuestion("Summarize the key points")}
+                              disabled={!ragReady || isAsking}
+                              className="text-left p-3 bg-white hover:bg-blue-50 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed border border-blue-200 text-sm"
+                            >
+                              📝 Summarize key points
+                            </button>
+                            <button 
+                              onClick={() => handleRagQuestion("Are there any action items mentioned?")}
+                              disabled={!ragReady || isAsking}
+                              className="text-left p-3 bg-white hover:bg-blue-50 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed border border-blue-200 text-sm"
+                            >
+                              ✅ Any action items?
+                            </button>
+                            <button 
+                              onClick={() => handleRagQuestion("What are the most important details?")}
+                              disabled={!ragReady || isAsking}
+                              className="text-left p-3 bg-white hover:bg-blue-50 rounded-lg transition-colors text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed border border-blue-200 text-sm"
+                            >
+                              ⭐ Important details?
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Chat Messages */}
+                      <div className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                        {ragMessages.length === 0 ? (
+                          <div className="text-center py-8">
+                            <Bot className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                            <p className="text-gray-500">Start by asking a question about your document above, or type your own question below.</p>
+                          </div>
+                        ) : (
+                          ragMessages.map((message, index) => (
+                            <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
+                                message.type === 'user'
+                                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-md'
+                                  : 'bg-white text-gray-900 border border-gray-200 rounded-bl-md'
+                              }`}>
+                                {message.type === 'bot' && (
+                                  <div className="flex items-center mb-2">
+                                    <Bot className="h-4 w-4 text-purple-600 mr-2" />
+                                    <span className="text-xs font-medium text-purple-600">AI Assistant</span>
+                                  </div>
+                                )}
+                                <div className={`${message.type === 'user' ? 'text-white' : 'text-gray-800'} leading-relaxed`}>
+                                  {message.content}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                        
+                        {/* Typing indicator */}
+                        {isAsking && (
+                          <div className="flex justify-start">
+                            <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 max-w-xs">
+                              <div className="flex items-center">
+                                <Bot className="h-4 w-4 text-purple-600 mr-2" />
+                                <div className="flex space-x-1">
+                                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"></div>
+                                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
-                      <RagQuestionInput 
-                        onAsk={handleRagQuestion}
-                        disabled={!ragReady}
-                        isAsking={isAsking}
-                      />
+                      {/* Input Area */}
+                      <div className="p-4 bg-white border-t border-gray-200">
+                        <RagQuestionInput 
+                          onAsk={handleRagQuestion}
+                          disabled={!ragReady}
+                          isAsking={isAsking}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -366,20 +449,6 @@ const DemoPage = () => {
         </div>
       </section>
 
-      {/* RAG Results Display */}
-      {activeDemo === 'rag' && uploadedFile && (
-        <section className="py-12 bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div id="rag-results" className="bg-gray-50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Q&A Results</h3>
-              <div id="rag-conversation" className="space-y-4">
-                {/* Results will be dynamically added here */}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Schedule Demo CTA */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -413,51 +482,31 @@ const RagQuestionInput = ({ onAsk, disabled, isAsking }: {
     e.preventDefault();
     if (!question.trim() || disabled || isAsking) return;
 
-    const answer = await onAsk(question);
-    
-    // Display the result
-    const resultsContainer = document.getElementById('rag-conversation');
-    if (resultsContainer) {
-      const questionDiv = document.createElement('div');
-      questionDiv.className = 'bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500';
-      questionDiv.innerHTML = `<strong>Q:</strong> ${question}`;
-      
-      const answerDiv = document.createElement('div');
-      answerDiv.className = 'bg-white p-4 rounded-lg border-l-4 border-gray-300';
-      answerDiv.innerHTML = `<strong>A:</strong> ${answer}`;
-      
-      resultsContainer.appendChild(questionDiv);
-      resultsContainer.appendChild(answerDiv);
-      
-      // Scroll to results
-      resultsContainer.scrollIntoView({ behavior: 'smooth' });
-    }
-    
+    await onAsk(question);
     setQuestion('');
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex space-x-2">
+    <form onSubmit={handleSubmit} className="flex space-x-3">
       <input
         type="text"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Ask a question about your document..."
+        placeholder="Type your question here..."
         disabled={disabled || isAsking}
-        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-gray-50 focus:bg-white transition-colors"
       />
       <button 
         type="submit"
         disabled={disabled || isAsking || !question.trim()}
-        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-lg hover:shadow-xl"
       >
         {isAsking ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            Asking...
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
           </>
         ) : (
-          'Ask'
+          <Send className="h-4 w-4" />
         )}
       </button>
     </form>
