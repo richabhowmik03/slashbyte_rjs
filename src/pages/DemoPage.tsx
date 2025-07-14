@@ -13,7 +13,7 @@ const DemoPage = () => {
   const [ragReady, setRagReady] = useState(false);
 
   // Backend API URL - adjust if your backend runs on a different port
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://slashbyte-rjs.vercel.app/';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://slashbyte-rjs.onrender.com';
 
   const demos = [
     {
