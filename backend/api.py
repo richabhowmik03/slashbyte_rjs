@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 import os
 import tempfile
@@ -13,6 +14,7 @@ from langchain_openai import AzureOpenAIEmbeddings, AzureChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
+from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
 # Load environment variables
 load_dotenv()
@@ -102,8 +104,36 @@ def setup_rag_chain(documents):
             azure_endpoint=AZURE_ENDPOINT,
             api_key=AZURE_KEY,
             api_version=AZURE_CHAT_API_VER,
-            temperature=1.0,
+            temperature=0.3,
         )
+        
+        # Create custom prompt template with guardrails
+        system_template = """You are a helpful AI assistant that answers questions STRICTLY based on the provided document context. 
+
+IMPORTANT RULES:
+1. You can ONLY answer questions using information that is explicitly present in the provided context below.
+2. If the answer to a question is not found in the context, you MUST respond with: "I cannot find information about this topic in the uploaded document. Please ask questions related to the content of your document."
+3. Do NOT use your general knowledge or training data to answer questions.
+4. Do NOT make assumptions or inferences beyond what is explicitly stated in the context.
+5. Always cite or reference the relevant parts of the document when answering.
+6. If asked about topics completely unrelated to the document, politely redirect the user to ask document-related questions.
+
+Context from the uploaded document:
+{context}
+
+Remember: Only answer based on the context above. If the information is not in the context, clearly state that you cannot find it in the document."""
+
+        human_template = """Based on the document context provided above, please answer the following question:
+
+Question: {question}
+
+Answer:"""
+
+        # Create the prompt template
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate.from_template(system_template),
+            HumanMessagePromptTemplate.from_template(human_template)
+        ])
         
         # Create memory and chain
         memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -112,6 +142,7 @@ def setup_rag_chain(documents):
             retriever=vectorstore.as_retriever(),
             memory=memory,
             chain_type="stuff",
+            combine_docs_chain_kwargs={"prompt": prompt}
         )
         
         return True
