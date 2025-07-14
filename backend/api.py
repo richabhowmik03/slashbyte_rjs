@@ -104,7 +104,7 @@ def setup_rag_chain(documents):
             azure_endpoint=AZURE_ENDPOINT,
             api_key=AZURE_KEY,
             api_version=AZURE_CHAT_API_VER,
-            temperature=0.3,
+            temperature=1.0,
         )
         
         # Create custom prompt template with guardrails
