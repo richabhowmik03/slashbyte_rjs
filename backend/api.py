@@ -186,7 +186,7 @@ async def ask_question(request: QuestionRequest):
     global rag_chain
     
     if rag_chain is None:
-        raise HTTPException(status_code=400, detail="No document uploaded. Please upload a document first.")
+        raise HTTPException(status_code=400, detail="No document was uploaded. Please upload a document first.")
     
     try:
         result = rag_chain.invoke({"question": request.question})
