@@ -22,7 +22,7 @@ app = FastAPI(title="RAG API", description="Document Q&A API using RAG")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://slashbyte.org", "http://slashbyte.org/demo", "http://localhost:8000", "https://slashbyte.vercel.app/", "https://localhost:5173"],  
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -94,7 +94,7 @@ def setup_rag_chain(documents):
             azure_endpoint=AZURE_ENDPOINT,
             api_key=AZURE_KEY,
             api_version=AZURE_CHAT_API_VER,
-            temperature=0.7,
+            temperature=1.0,
         )
         
         # Create memory and chain
@@ -128,15 +128,20 @@ async def upload_document(file: UploadFile = File(...)):
             status_code=400, 
             detail=f"Unsupported file type. Allowed: {', '.join(allowed_extensions)}"
         )
-    
+
+    tmp_file_path = None
     try:
         # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tmp_file:
-            shutil.copyfileobj(file.file, tmp_file)
+            content = await file.read()
+            tmp_file.write(content)
             tmp_file_path = tmp_file.name
         
         # Load the document
         documents = load_document(tmp_file_path)
+
+        if not documents:
+          raise HTTPException(status_code=400, detail="No content found in the document")
         
         # Set up RAG chain
         setup_rag_chain(documents)
@@ -149,7 +154,8 @@ async def upload_document(file: UploadFile = File(...)):
         return {
             "message": f"Document '{file.filename}' uploaded and processed successfully",
             "filename": file.filename,
-            "chunks": len(documents)
+            "chunks": len(documents),
+            "success": True
         }
         
     except Exception as e:
@@ -191,6 +197,21 @@ async def get_status():
         "azure_endpoint": AZURE_ENDPOINT is not None,
         "deployment": DEPLOYMENT_CHAT
     }
+  
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "RAG API"}
+
+# Error handlers
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    return {
+        "error": True,
+        "message": exc.detail,
+        "status_code": exc.status_code
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
