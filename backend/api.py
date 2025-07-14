@@ -122,6 +122,11 @@ def setup_rag_chain(documents):
 async def root():
     return {"message": "RAG API is running"}
 
+# Add a HEAD endpoint for the root path to satisfy internal health checks
+@app.head("/")
+async def head_root():
+    return Response(status_code=200)
+
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
     """Upload and process a document"""
