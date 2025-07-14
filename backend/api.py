@@ -22,7 +22,7 @@ app = FastAPI(title="RAG API", description="Document Q&A API using RAG")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://slashbyte.org", "http://slashbyte.org/demo", "http://localhost:8000", "https://slashbyte.vercel.app/"],  
+    allow_origins=["http://slashbyte.org", "http://slashbyte.org/demo", "http://localhost:8000", "https://slashbyte.vercel.app/", "https://localhost:5173"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
