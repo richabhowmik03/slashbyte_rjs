@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Minimize2, Maximize2, Bot, User, Calendar, Clock } from 'lucide-react';
+import { bookAppointment } from '../utils/googleCalendar';
 
 interface Message {
   id: string;
@@ -290,8 +291,30 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLeadCapture, onAppointm
 
       case 'confirm':
         if (input.toLowerCase().includes('yes') || input === 'Yes, Book It!') {
-          bookAppointment();
+          bookAppointmentReal();
         } else if (input.toLowerCase().includes('change')) {
+          setBookingStep('date');
+          const dateOptions = generateDateOptions();
+          addMessage(
+            "No problem! Let's pick a different time.\n\nWhich date works better?",
+            'bot',
+            dateOptions
+          );
+        } else if (input === 'Try Again' || input === 'Try Booking Again') {
+          setBookingStep('date');
+          const dateOptions = generateDateOptions();
+          addMessage(
+            "Let's try booking again! Which date would you prefer?",
+            'bot',
+            dateOptions
+          );
+        } else if (input === 'Contact Directly') {
+          addMessage(
+            "No problem! You can reach us directly:\n\n📧 Email: hello@slashbyte.org\n📱 Phone: +91 (600) 991-5076\n💬 WhatsApp: Available during business hours\n\nWe typically respond within 2-4 hours during business days.\n\nAnything else I can help you with?",
+            'bot',
+            ['Ask Another Question', 'Explore Services', 'Back to Main Menu']
+          );
+        } else if (input === 'Choose Different Time') {
           setBookingStep('date');
           const dateOptions = generateDateOptions();
           addMessage(
@@ -305,26 +328,57 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLeadCapture, onAppointm
         break;
     }
   };
+  const bookAppointmentReal = () => {
+    const bookAppointmentAsync = async () => {
+      // Show loading message
+      addMessage(
+        `⏳ Creating your calendar appointment...\n\nPlease wait while I set up your meeting with Google Calendar.`,
+        'bot'
+      );
 
-  const bookAppointment = () => {
-    // Here you would integrate with Google Calendar API
-    // For now, we'll simulate the booking
-    
-    const finalAppointmentData = { ...appointmentData };
-    onAppointmentBooked?.(finalAppointmentData);
-    
-    addMessage(
-      `✅ Appointment Booked Successfully!\n\nYou'll receive a calendar invite at ${appointmentData.email} shortly.\n\n📅  Meeting Details: \n• Date: ${appointmentData.date}\n• Time: ${appointmentData.time} EST\n• Duration: 15 minutes\n• Type: Video call (link in invite)\n\n What to expect:\n• Discussion of your project needs\n• Service recommendations\n• Next steps and timeline\n\nLooking forward to speaking with you! 🚀\n\nAnything else I can help with today?`,
-      'bot',
-      ['Ask Another Question', 'Explore Services', 'End Chat']
-    );
-    
-    // Reset booking state
-    setIsBookingAppointment(false);
-    setBookingStep('name');
-    setAppointmentData({
-      name: '', email: '', date: '', time: '', service: 'General Consultation', timezone: 'America/New_York'
-    });
+      try {
+        const finalAppointmentData = { ...appointmentData };
+        
+        // Call the Google Calendar API
+        const result = await bookAppointment(finalAppointmentData);
+        
+        if (result.success) {
+          // Success message
+          addMessage(
+            `✅ Appointment Booked Successfully!\n\n${result.message}\n\n📅  Meeting Details: \n• Date: ${appointmentData.date}\n• Time: ${appointmentData.time} EST\n• Duration: 15 minutes\n• Type: Video call (Google Meet link included)\n\n📧  Calendar Invite: \nSent to ${appointmentData.email}\n\n What to expect:\n• Discussion of your project needs\n• Service recommendations\n• Next steps and timeline\n\nLooking forward to speaking with you! 🚀\n\nAnything else I can help with today?`,
+            'bot',
+            ['Ask Another Question', 'Explore Services', 'End Chat']
+          );
+          
+          // Call the callback for analytics/tracking
+          onAppointmentBooked?.(finalAppointmentData);
+        } else {
+          // Error message with retry option
+          addMessage(
+            `❌ Booking Failed\n\n${result.message}\n\nThis might be due to:\n• Google Calendar authorization needed\n• Time slot no longer available\n• Network connectivity issues\n\nWould you like to try again or contact us directly?`,
+            'bot',
+            ['Try Again', 'Contact Directly', 'Choose Different Time']
+          );
+        }
+      } catch (error) {
+        console.error('Appointment booking error:', error);
+        addMessage(
+          `❌ Unexpected Error\n\nSorry, something went wrong while booking your appointment. \n\nPlease try again or contact us directly at:\n📧 hello@slashbyte.org\n📱 +91 (600) 991-5076\n\nWe'll get back to you within 24 hours!`,
+          'bot',
+          ['Try Booking Again', 'Contact Directly', 'Back to Main Menu']
+        );
+      }
+      
+      // Reset booking state
+      setIsBookingAppointment(false);
+      setBookingStep('name');
+      setAppointmentData({
+        name: '', email: '', date: '', time: '', service: 'General Consultation', timezone: 'America/New_York'
+      });
+    };
+
+    // Call the async function
+    bookAppointmentAsync();
   };
 
   const cancelBooking = () => {

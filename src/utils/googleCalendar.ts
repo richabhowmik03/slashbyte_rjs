@@ -36,11 +36,11 @@ interface AppointmentData {
 
 // Google Calendar API configuration
 const GOOGLE_CALENDAR_CONFIG = {
-  CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID || '',
-  API_KEY: process.env.REACT_APP_GOOGLE_API_KEY || '',
+  CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID || '774850234480e0388fhhj1t5udurskni924fhl1ohp5.apps.googleusercontent.com',
+  API_KEY: import.meta.env.VITE_GOOGLE_API_KEY || 'AIzaSyBSN7uWMsmkLKgllKlnFrZeZoXBHPppiCU',
   DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
   SCOPES: 'https://www.googleapis.com/auth/calendar.events',
-  CALENDAR_ID: process.env.REACT_APP_GOOGLE_CALENDAR_ID || 'primary'
+  CALENDAR_ID: import.meta.env.VITE_GOOGLE_CALENDAR_ID || 'primary'
 };
 
 class GoogleCalendarService {
@@ -116,22 +116,48 @@ class GoogleCalendarService {
   }
 
   private parseDateTime(date: string, time: string, timezone: string): string {
-    // Convert date string like "Monday, Jan 15" to proper date
-    const currentYear = new Date().getFullYear();
-    const dateStr = `${date} ${currentYear}`;
-    const parsedDate = new Date(dateStr);
+    try {
+      // Convert date string like "Monday, Jan 15" to proper date
+      const currentYear = new Date().getFullYear();
+      const dateStr = `${date} ${currentYear}`;
+      const parsedDate = new Date(dateStr);
+      
+      // If the parsed date is invalid or in the past, try next year
+      if (isNaN(parsedDate.getTime()) || parsedDate < new Date()) {
+        const nextYearStr = `${date} ${currentYear + 1}`;
+        const nextYearDate = new Date(nextYearStr);
+        if (!isNaN(nextYearDate.getTime())) {
+          parsedDate.setTime(nextYearDate.getTime());
+        }
+      }
     
-    // Parse time string like "2:00 PM"
-    const [timeStr, period] = time.split(' ');
-    const [hours, minutes] = timeStr.split(':').map(Number);
+      // Parse time string like "2:00 PM"
+      const [timeStr, period] = time.split(' ');
+      const [hours, minutes] = timeStr.split(':').map(Number);
     
-    let hour24 = hours;
-    if (period === 'PM' && hours !== 12) hour24 += 12;
-    if (period === 'AM' && hours === 12) hour24 = 0;
+      let hour24 = hours;
+      if (period === 'PM' && hours !== 12) hour24 += 12;
+      if (period === 'AM' && hours === 12) hour24 = 0;
     
-    parsedDate.setHours(hour24, minutes || 0, 0, 0);
+      parsedDate.setHours(hour24, minutes || 0, 0, 0);
     
-    return parsedDate.toISOString();
+      return parsedDate.toISOString();
+    } catch (error) {
+      console.error('Date parsing error:', error);
+      // Fallback: create a date for tomorrow at the specified time
+      const fallbackDate = new Date();
+      fallbackDate.setDate(fallbackDate.getDate() + 1);
+      
+      const [timeStr, period] = time.split(' ');
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      
+      let hour24 = hours;
+      if (period === 'PM' && hours !== 12) hour24 += 12;
+      if (period === 'AM' && hours === 12) hour24 = 0;
+      
+      fallbackDate.setHours(hour24, minutes || 0, 0, 0);
+      return fallbackDate.toISOString();
+    }
   }
 
   async createEvent(appointmentData: AppointmentData): Promise<boolean> {
@@ -148,8 +174,8 @@ class GoogleCalendarService {
       endDate.setMinutes(endDate.getMinutes() + 15); // 15-minute consultation
       
       const event: CalendarEvent = {
-        summary: `SlashByte Consultation - ${appointmentData.name}`,
-        description: `Free consultation call with ${appointmentData.name}\n\nService Interest: ${appointmentData.service}\nEmail: ${appointmentData.email}\n\nMeeting Link: [Video call link will be added automatically]\n\nAgenda:\n- Discuss project requirements\n- Service recommendations\n- Timeline and next steps`,
+        summary: `SlashByte Free Consultation - ${appointmentData.name}`,
+        description: `🚀 SlashByte Free Consultation Call\n\n👤 Client: ${appointmentData.name}\n📧 Email: ${appointmentData.email}\n🎯 Service Interest: ${appointmentData.service}\n\n📋 Meeting Agenda:\n• Discuss your project requirements\n• Explore AI & digital solutions\n• Service recommendations\n• Timeline and next steps\n• Q&A session\n\n🔗 This meeting will include a Google Meet link for video conferencing.\n\n📞 Contact Info:\n• Website: https://slashbyte.org\n• Email: hello@slashbyte.org\n• Phone: +91 (600) 991-5076\n\nLooking forward to speaking with you!`,
         start: {
           dateTime: startDateTime,
           timeZone: appointmentData.timezone,
@@ -162,21 +188,27 @@ class GoogleCalendarService {
           {
             email: appointmentData.email,
             displayName: appointmentData.name,
+          },
+          {
+            email: 'hello@slashbyte.org',
+            displayName: 'SlashByte Team',
           }
         ],
         reminders: {
           useDefault: false,
           overrides: [
             { method: 'email', minutes: 24 * 60 }, // 1 day before
+            { method: 'email', minutes: 60 }, // 1 hour before
             { method: 'popup', minutes: 15 }, // 15 minutes before
           ],
-        },
+        }
       };
 
       const response = await this.gapi.client.calendar.events.insert({
         calendarId: GOOGLE_CALENDAR_CONFIG.CALENDAR_ID,
         resource: event,
-        sendUpdates: 'all', // Send email invitations
+        sendUpdates: 'all', // Send email invitations to all attendees
+        conferenceDataVersion: 1, // Enable Google Meet integration
       });
 
       console.log('Event created successfully:', response);
@@ -229,7 +261,7 @@ export async function bookAppointment(appointmentData: AppointmentData): Promise
       if (!signInSuccess) {
         return {
           success: false,
-          message: 'Google Calendar authorization required. Please try again and allow calendar access.'
+          message: 'Google Calendar authorization is required to book appointments. Please allow calendar access when prompted and try again.'
         };
       }
     }
@@ -243,7 +275,7 @@ export async function bookAppointment(appointmentData: AppointmentData): Promise
     if (!isAvailable) {
       return {
         success: false,
-        message: 'This time slot is no longer available. Please choose a different time.'
+        message: 'Sorry, this time slot is no longer available. Please choose a different date and time.'
       };
     }
 
@@ -253,19 +285,19 @@ export async function bookAppointment(appointmentData: AppointmentData): Promise
     if (eventCreated) {
       return {
         success: true,
-        message: 'Appointment booked successfully! Calendar invite sent to your email.'
+        message: `Perfect! Your consultation is confirmed and a calendar invite with Google Meet link has been sent to ${appointmentData.email}.`
       };
     } else {
       return {
         success: false,
-        message: 'Failed to create calendar event. Please try again or contact us directly.'
+        message: 'Unable to create the calendar event at this time. This might be a temporary issue. Please try again in a moment.'
       };
     }
   } catch (error) {
     console.error('Appointment booking error:', error);
     return {
       success: false,
-      message: 'An error occurred while booking your appointment. Please try again.'
+      message: 'An unexpected error occurred while booking your appointment. Please try again or contact us directly for assistance.'
     };
   }
 }
