@@ -300,34 +300,13 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLeadCapture, onAppointm
             'bot',
             dateOptions
           );
-        } else if (input === 'Try Again' || input === 'Try Booking Again') {
-          setBookingStep('date');
-          const dateOptions = generateDateOptions();
-          addMessage(
-            "Let's try booking again! Which date would you prefer?",
-            'bot',
-            dateOptions
-          );
-        } else if (input === 'Contact Directly') {
-          addMessage(
-            "No problem! You can reach us directly:\n\n📧 Email: hello@slashbyte.org\n📱 Phone: +91 (600) 991-5076\n💬 WhatsApp: Available during business hours\n\nWe typically respond within 2-4 hours during business days.\n\nAnything else I can help you with?",
-            'bot',
-            ['Ask Another Question', 'Explore Services', 'Back to Main Menu']
-          );
-        } else if (input === 'Choose Different Time') {
-          setBookingStep('date');
-          const dateOptions = generateDateOptions();
-          addMessage(
-            "No problem! Let's pick a different time.\n\nWhich date works better?",
-            'bot',
-            dateOptions
-          );
         } else {
           cancelBooking();
         }
         break;
     }
   };
+
   const bookAppointmentReal = () => {
     const bookAppointmentAsync = async () => {
       // Show loading message
