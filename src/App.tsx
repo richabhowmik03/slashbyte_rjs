@@ -9,6 +9,7 @@ import DemoPage from './pages/DemoPage';
 import CareersPage from './pages/CareersPage';
 import ContactPage from './pages/ContactPage';
 import Footer from './components/Footer';
+import ChatbotWidget from './components/ChatbotWidget';
 
 function App() {
 
