@@ -11,6 +11,20 @@ import ContactPage from './pages/ContactPage';
 import Footer from './components/Footer';
 
 function App() {
+
+  const handleLeadCapture = (leadData: { name: string; email: string; service: string }) => {
+    console.log('Lead captured:', leadData);
+    // Here you can integrate with your CRM, email service, or analytics
+    // For example: send to your backend API, Google Analytics, etc.
+  };
+
+  const handleAppointmentBooked = (appointmentData: { name: string; email: string; date: string; time: string; service: string }) => {
+    console.log('Appointment booked:', appointmentData);
+    // Here you would integrate with Google Calendar API
+    // Example: POST to your backend API that handles Google Calendar OAuth
+    // fetch('/api/book-appointment', { method: 'POST', body: JSON.stringify(appointmentData) })
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-white">
@@ -25,6 +39,10 @@ function App() {
           <Route path="/careers" element={<CareersPage />} />
         </Routes>
         <Footer />
+        <ChatbotWidget 
+          onLeadCapture={handleLeadCapture}
+          onAppointmentBooked={handleAppointmentBooked}
+        />
       </div>
     </Router>
   );
