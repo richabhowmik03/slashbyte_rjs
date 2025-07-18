@@ -324,7 +324,7 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLeadCapture, onAppointm
         if (result.success) {
           // Success message
           addMessage(
-            `✅ Appointment Booked Successfully!\n\n${result.message}\n\n📅  Meeting Details: \n• Date: ${appointmentData.date}\n• Time: ${appointmentData.time} EST\n• Duration: 15 minutes\n• Type: Video call (Google Meet link included)\n\n📧  Calendar Invite: \nSent to ${appointmentData.email}\n\n What to expect:\n• Discussion of your project needs\n• Service recommendations\n• Next steps and timeline\n\nLooking forward to speaking with you! 🚀\n\nAnything else I can help with today?`,
+            `✅ Appointment Booked Successfully!\n\n${result.message}\n\n📅  Meeting Details: \n• Date: ${appointmentData.date}\n• Time: ${appointmentData.time} EST\n• Duration: 15 minutes\n• Type: Video call with Google Meet\n\n📧  Calendar Invite: \nSent to ${appointmentData.email} with meeting link included\n\n📋  What to expect:\n• Discussion of your project needs\n• Service recommendations\n• Next steps and timeline\n• Google Meet link will be in your calendar invite\n\nLooking forward to speaking with you! 🚀\n\nAnything else I can help with today?`,
             'bot',
             ['Ask Another Question', 'Explore Services', 'End Chat']
           );

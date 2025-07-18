@@ -175,7 +175,7 @@ class GoogleCalendarService {
       
       const event: CalendarEvent = {
         summary: `SlashByte Free Consultation - ${appointmentData.name}`,
-        description: `🚀 SlashByte Free Consultation Call\n\n👤 Client: ${appointmentData.name}\n📧 Email: ${appointmentData.email}\n🎯 Service Interest: ${appointmentData.service}\n\n📋 Meeting Agenda:\n• Discuss your project requirements\n• Explore AI & digital solutions\n• Service recommendations\n• Timeline and next steps\n• Q&A session\n\n🔗 This meeting will include a Google Meet link for video conferencing.\n\n📞 Contact Info:\n• Website: https://slashbyte.org\n• Email: hello@slashbyte.org\n• Phone: +91 (600) 991-5076\n\nLooking forward to speaking with you!`,
+        description: `🚀 SlashByte Free Consultation Call\n\n👤 Client: ${appointmentData.name}\n📧 Email: ${appointmentData.email}\n🎯 Service Interest: ${appointmentData.service}\n\n📋 Meeting Agenda:\n• Discuss your project requirements\n• Explore AI & digital solutions\n• Service recommendations\n• Timeline and next steps\n• Q&A session\n\n🔗 A Google Meet link will be automatically generated and included in this calendar invitation for easy video conferencing.\n\n📞 Contact Info:\n• Website: https://slashbyte.org\n• Email: hello@slashbyte.org\n• Phone: +91 (600) 991-5076\n\nLooking forward to speaking with you!`,
         start: {
           dateTime: startDateTime,
           timeZone: appointmentData.timezone,
@@ -201,6 +201,14 @@ class GoogleCalendarService {
             { method: 'email', minutes: 60 }, // 1 hour before
             { method: 'popup', minutes: 15 }, // 15 minutes before
           ],
+        },
+        conferenceData: {
+          createRequest: {
+            requestId: `slashbyte-${Date.now()}`,
+            conferenceSolutionKey: {
+              type: 'hangoutsMeet'
+            }
+          }
         }
       };
 
