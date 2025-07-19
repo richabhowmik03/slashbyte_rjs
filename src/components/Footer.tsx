@@ -157,12 +157,12 @@ const Footer = () => {
               <Link to="/contact" className="text-gray-300 hover:text-white transition-colors duration-200">
                 Contact
               </Link>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200">
+              <Link to="/privacy-policy" className="text-gray-300 hover:text-white transition-colors duration-200">
                 Privacy Policy
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200">
+              </Link>
+              <Link to="/terms-of-service" className="text-gray-300 hover:text-white transition-colors duration-200">
                 Terms of Service
-              </a>
+              </Link>
             </div>
             
             <div className="text-gray-400 text-sm">

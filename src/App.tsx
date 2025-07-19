@@ -8,6 +8,8 @@ import PortfolioPage from './pages/PortfolioPage';
 import DemoPage from './pages/DemoPage';
 import CareersPage from './pages/CareersPage';
 import ContactPage from './pages/ContactPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 import Footer from './components/Footer';
 import ChatbotWidget from './components/ChatbotWidget';
 
@@ -38,6 +40,8 @@ function App() {
           <Route path="/demo" element={<DemoPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/careers" element={<CareersPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
         </Routes>
         <Footer />
         <ChatbotWidget 
